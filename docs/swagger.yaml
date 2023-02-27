@@ -1,0 +1,424 @@
+definitions:
+  entities.Customer:
+    properties:
+      address:
+        $ref: '#/definitions/sharedentities.Address'
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  entities.CustomerRequestModel:
+    properties:
+      address:
+        $ref: '#/definitions/sharedentities.Address'
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+    type: object
+  entities.Order:
+    properties:
+      address:
+        $ref: '#/definitions/sharedentities.Address'
+      customer_id:
+        type: string
+      id:
+        type: string
+      order_date:
+        type: string
+      order_item:
+        $ref: '#/definitions/entities.Product'
+      order_total:
+        type: integer
+      payment_status:
+        type: string
+      shipment_status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  entities.OrderRequestModel:
+    properties:
+      order_item:
+        $ref: '#/definitions/entities.Product'
+      order_total:
+        type: integer
+      payment_status:
+        type: string
+      shipment_status:
+        type: string
+    type: object
+  entities.Product:
+    properties:
+      id:
+        type: string
+      imageurl:
+        type: string
+      name:
+        type: string
+    type: object
+  sharedentities.Address:
+    description: a nested struct for a field of entities.Customer and entities.Order
+    properties:
+      address_line:
+        type: string
+      address_name:
+        type: string
+      city:
+        type: string
+      city_code:
+        type: integer
+      country:
+        type: string
+      customer_id:
+        type: string
+    type: object
+  sharedentities.ResponseModel:
+    description: a struct for response with total object count and response object
+      count fields
+    properties:
+      data: {}
+      resp_object_count:
+        type: integer
+      total_object_count:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /.../generic:
+    get:
+      consumes:
+      - application/json
+      description: Gets a generic content by usage
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharedentities.ResponseModel'
+        "400":
+          description: bad request
+          schema:
+            type: error
+        "500":
+          description: binding error
+          schema:
+            type: error
+      summary: Generic endpoint
+      tags:
+      - shared
+  /customers/:
+    get:
+      consumes:
+      - application/json
+      description: Gets all customers with pagination support
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: string
+      - description: Offset
+        in: query
+        name: offset
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Customer'
+            type: array
+      summary: Gets all customers
+      tags:
+      - customers
+    post:
+      consumes:
+      - application/json
+      description: Creates a new customer with the given data
+      parameters:
+      - description: Customer Request Model
+        in: body
+        name: customerReq
+        required: true
+        schema:
+          $ref: '#/definitions/entities.CustomerRequestModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      summary: Creates a new customer
+      tags:
+      - customers
+  /customers/:customerid:
+    delete:
+      consumes:
+      - application/json
+      description: |-
+        Deletes an existing customer with the given ID
+        Checks the order service whether if the user has non-delivered orders
+      parameters:
+      - description: Customer ID
+        in: path
+        name: customerid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Deletes an existing customer
+      tags:
+      - customers
+    get:
+      consumes:
+      - application/json
+      description: Gets a single customer with the given ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: customerid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Customer'
+      summary: Gets a single customer
+      tags:
+      - customers
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing customer with the given data
+      parameters:
+      - description: Customer ID
+        in: path
+        name: customerid
+        required: true
+        type: string
+      - description: Customer Request Model
+        in: body
+        name: customerReq
+        required: true
+        schema:
+          $ref: '#/definitions/entities.CustomerRequestModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      summary: Updates an existing customer
+      tags:
+      - customers
+  /customers/address/:customerid:
+    get:
+      consumes:
+      - application/json
+      description: Gets the address of a customer with the given ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: customerid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharedentities.Address'
+      summary: Gets the address of a customer
+      tags:
+      - customers
+  /orders:
+    get:
+      consumes:
+      - application/json
+      description: It gets all order list due to limit offset values
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: string
+      - description: offset
+        in: query
+        name: offset
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Order'
+        "500":
+          description: internal server error
+          schema:
+            type: error
+      summary: It serves all orders
+      tags:
+      - orders
+  /orders/:customerid:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        It creates an order that comes with req. Body as JSON.
+        has validation
+      parameters:
+      - description: Order fields
+        in: body
+        name: entities.OrderRequestModel
+        required: true
+        schema:
+          $ref: '#/definitions/entities.OrderRequestModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: bad request
+          schema:
+            type: error
+        "500":
+          description: binding error
+          schema:
+            type: error
+      summary: It creates an order
+      tags:
+      - orders
+  /orders/:orderid:
+    delete:
+      consumes:
+      - application/json
+      description: It deletes an order due to its UUID
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 1 order has been deleted
+          schema:
+            type: string
+        "400":
+          description: bad request
+          schema:
+            type: error
+        "404":
+          description: Given ID param does not match any order.
+          schema:
+            type: error
+      summary: It deletes "an" order
+      tags:
+      - orders
+    get:
+      consumes:
+      - application/json
+      description: It gets an order due to its UUID
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Order'
+      summary: It serves "an" order
+      tags:
+      - orders
+    put:
+      consumes:
+      - application/json
+      description: |-
+        It updates an order that comes with req. Body as JSON.
+        has validation
+      parameters:
+      - description: order fields
+        in: body
+        name: entities.OrderRequestModel
+        required: true
+        schema:
+          $ref: '#/definitions/entities.OrderRequestModel'
+      - description: Order UUID
+        in: path
+        name: ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: bad request
+          schema:
+            type: error
+        "500":
+          description: binding error
+          schema:
+            type: error
+      summary: It updates an order
+      tags:
+      - orders
+  /orders/orderof/:customerid:
+    get:
+      consumes:
+      - application/json
+      description: Gets the orders of a customer with the given ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: customerid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharedentities.Address'
+      summary: Gets the orders of a customer
+      tags:
+      - orders
+swagger: "2.0"
